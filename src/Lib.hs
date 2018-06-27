@@ -16,13 +16,21 @@ getVector2u :: Vec2u -> (Int, Int)
 getVector2u v = ((w !! 0), (w !! 1))
         where w = map (read) $ drop 1 $ words $ show v
 
+getVector2f :: Vec2f -> (Float, Float)
+getVector2f v = ((w !! 0), (w !! 1))
+        where w = map (read) $ drop 1 $ words $ show v
+
 clickInVertex :: Int -> Int -> Vertex -> Bool
 clickInVertex x y vtx
     | x > avx && x < bvx = True
     | y > avy && y < bvy = True
         where
-            avx = min (fst $ position vtx) (fst $ texCoords vtx)
-            bvx = max (fst $ position vtx) (fst $ texCoords vtx)
 
-            avy = min (snd $ position vtx) (snd $ texCoords vtx)
-            bvy = max (snd $ position vtx) (snd $ texCoords vtx)
+            (posx, posy) = getVector2f $ position vtx
+            (texx, texy) = getVector2f $ texCoords vtx
+
+            avx = floor $ min posx texx
+            bvx = floor $ max posx texx
+
+            avy = floor $ min posy texy
+            bvy = floor $ max posy texy
