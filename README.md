@@ -1,1 +1,1 @@
-# HaskJam
+# FUN
