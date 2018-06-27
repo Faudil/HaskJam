@@ -10,6 +10,9 @@ module Main where
 
 import Lib
 
+import System.Random
+import Debug.Trace
+
 import SFML.Graphics
 import SFML.Window
 import SFML.Window.Event
@@ -24,16 +27,30 @@ nColors = length colors
 
 main = do
   vMode <- getDesktopMode
-  wnd <- createRenderWindow vMode "SFML Haskell Demo" [SFFullscreen] Nothing
+  wnd <- createRenderWindow vMode "SFML Haskell Demo" [] Nothing
   va <- createVA
+  cl <- createClock
   setPrimitiveType va Triangles
-  loop wnd va
+  loop wnd va cl
   destroy va
   destroy wnd
 
+getVector :: Vec2u -> (Int, Int)
+getVector v = ((w !! 0), (w !! 1))
+        where w = map (read) $ drop 1 $ words $ show v
 
-loop :: RenderWindow -> VertexArray -> IO ()
-loop wnd va = do
+newRandPoint wnd va = do col <- randomRIO (0, nColors)
+                         vec <- getWindowSize wnd
+                         let v = getVector vec
+                         x <- randomRIO (10, (fst v) - 10)
+                         y <- randomRIO (10, (snd v) - 10)
+                         appendVertex va col x y 25 20
+                         appendVertex va col (x + 15) y 10 10
+                         appendVertex va col (x + 20) y 10 16
+
+loop :: RenderWindow -> VertexArray -> Clock -> IO ()
+loop wnd va cl = do
+  t <- getElapsedTime cl
   ret <- processEvt wnd va
   case ret of
     False -> return ()
@@ -41,22 +58,27 @@ loop wnd va = do
       clearRenderWindow wnd black
       drawVertexArray wnd va Nothing
       display wnd
-      loop wnd va
+      if asMilliseconds t >= 500 then newRandPoint wnd va >> restartClock cl>> loop wnd va cl
+                                 else loop wnd va cl
 
 
-appendVertex :: VertexArray -> Int -> Int -> Int -> IO ()
-appendVertex va f x y = do
+appendVertex :: VertexArray -> Int -> Int -> Int -> Int -> Int -> IO ()
+appendVertex va f x y sx sy = do
   let color = colors !! (f `mod` nColors)
-      x1 = fromIntegral $ x - 10
-      x2 = fromIntegral $ x + 10
-      y1 = fromIntegral $ y - 10
-      y2 = fromIntegral $ y + 10
+      x1 = fromIntegral $ x - sx `div` 2
+      x2 = fromIntegral $ x + sx `div` 2
+      y1 = fromIntegral $ y - sy `div` 2
+      y2 = fromIntegral $ y + sy `div` 2
       corners = [ Vec2f x1 y1, Vec2f x1 y2, Vec2f x2 y2,
                   Vec2f x1 y1, Vec2f x2 y2, Vec2f x2 y1 ]
       vtx v = Vertex v color v
       vertices = map vtx corners
   mapM_ (appendVA va) vertices
 
+buttonToInt MouseLeft = 0
+buttonToInt MouseMiddle = 1
+buttonToInt MouseRight = 2
+buttonToInt _ = 3
 
 processEvt :: RenderWindow -> VertexArray -> IO Bool
 processEvt wnd va = do
@@ -64,8 +86,6 @@ processEvt wnd va = do
   case evt of
     Just SFEvtClosed -> return False
     Just (SFEvtKeyPressed {code = KeyEscape}) -> return False
-    --Just (SFEvtTouchBegan f x y) -> appendVertex va f x y >> processEvt wnd va
-    --Just (SFEvtTouchMoved f x y) -> appendVertex va f x y >> processEvt wnd va
-    --Just (SFEvtTouchEnded f x y) -> appendVertex va f x y >> processEvt wnd va
+    Just (SFEvtMouseButtonPressed f x y) -> appendVertex va (buttonToInt f) x y 20 20 >> processEvt wnd va
     Nothing -> return True
     _ -> processEvt wnd va
