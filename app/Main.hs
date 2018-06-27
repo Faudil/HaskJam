@@ -35,13 +35,9 @@ main = do
   destroy va
   destroy wnd
 
-getVector :: Vec2u -> (Int, Int)
-getVector v = ((w !! 0), (w !! 1))
-        where w = map (read) $ drop 1 $ words $ show v
-
 newRandPoint wnd va = do col <- randomRIO (0, nColors)
                          vec <- getWindowSize wnd
-                         let v = getVector vec
+                         let v = getVector2u vec
                          x <- randomRIO (10, (fst v) - 10)
                          y <- randomRIO (10, (snd v) - 10)
                          appendVertex va col x y 25 20

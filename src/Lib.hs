@@ -6,12 +6,15 @@
 --      on Tue Jun 26 16:32:16 2018
 --
 
-module Lib
-    ( clickInVertex
-    ) where
+module Lib where
 
 import SFML.Graphics
+import SFML.System.Vector2
 
+
+getVector2u :: Vec2u -> (Int, Int)
+getVector2u v = ((w !! 0), (w !! 1))
+        where w = map (read) $ drop 1 $ words $ show v
 
 clickInVertex :: Int -> Int -> Vertex -> Bool
 clickInVertex x y vtx
